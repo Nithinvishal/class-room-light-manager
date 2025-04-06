@@ -1,0 +1,45 @@
+#this code is for micropython thonny
+from machine import Pin
+import time
+
+# Pin definitions
+sensor1_pin = 16  # Entry sensor
+sensor2_pin = 17  # Exit sensor
+relay_pin = 27    # Relay for controlling the bulb
+
+# Initialize pins
+sensor1 = Pin(sensor1_pin, Pin.IN, Pin.PULL_UP)
+sensor2 = Pin(sensor2_pin, Pin.IN, Pin.PULL_UP)
+relay = Pin(relay_pin, Pin.OUT)
+
+# Initialize variables
+person_count = 0
+relay.value(0)  # Ensure the bulb (relay) is OFF initially
+prev_sensor1 = sensor1.value()
+prev_sensor2 = sensor2.value()
+
+while True:
+    # Read current sensor values
+    current_sensor1 = sensor1.value()
+    current_sensor2 = sensor2.value()
+
+    # Check for entry (Sensor 1 triggers first, Sensor 2 remains idle)
+    if prev_sensor1 == 1 and current_sensor1 == 0 and current_sensor2 == 1:
+        person_count += 1
+        print(f"Person entered, Count: {person_count}")
+        relay.value(1)  # Turn ON the relay (bulb)
+
+    # Check for exit (Sensor 2 triggers first, Sensor 1 remains idle)
+    elif prev_sensor2 == 1 and current_sensor2 == 0 and current_sensor1 == 1:
+        if person_count > 0:  # Ensure count doesn't go negative
+            person_count -= 1
+            print(f"Person exited, Count: {person_count}")
+            if person_count == 0:
+                relay.value(0)  # Turn OFF the relay (bulb)
+
+    # Update previous sensor states
+    prev_sensor1 = current_sensor1
+    prev_sensor2 = current_sensor2
+
+    # Debounce delay
+    time.sleep(0.1)
